@@ -1,0 +1,215 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// NextAuth.js Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts          Account[]
+  sessions          Session[]
+  householdMembers  HouseholdMember[]
+  transactions      Transaction[]
+  categories        Category[]
+  recurringTransactions RecurringTransaction[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Application Models
+
+model Household {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members      HouseholdMember[]
+  transactions Transaction[]
+  categories   Category[]
+  recurringTransactions RecurringTransaction[]
+}
+
+model HouseholdMember {
+  id          String   @id @default(cuid())
+  householdId String
+  userId      String
+  role        HouseholdRole @default(MEMBER)
+  joinedAt    DateTime @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([householdId, userId])
+  @@index([userId])
+  @@index([householdId])
+}
+
+enum HouseholdRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  color       String   @default("#6366f1") // Hex color for UI
+  icon        String?  // Lucide icon name
+  type        TransactionType
+  householdId String?
+  userId      String?  // Personal category if not shared
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  household    Household?    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  recurringTransactions RecurringTransaction[]
+
+  @@index([householdId])
+  @@index([userId])
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  description String
+  amount      Decimal  @db.Decimal(12, 2)
+  type        TransactionType
+  frequency   FrequencyType
+  date        DateTime
+  isPaid      Boolean  @default(false)
+  notes       String?  @db.Text
+
+  categoryId  String
+  householdId String
+  userId      String   // Who created the transaction
+
+  calendarEventId String? // Google Calendar Event ID
+
+  recurringTransactionId String? // If this was generated from a recurring transaction
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  household  Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recurringTransaction RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id], onDelete: SetNull)
+
+  @@index([householdId])
+  @@index([userId])
+  @@index([categoryId])
+  @@index([date])
+  @@index([type])
+  @@index([isPaid])
+  @@index([recurringTransactionId])
+}
+
+model RecurringTransaction {
+  id          String   @id @default(cuid())
+  description String
+  amount      Decimal  @db.Decimal(12, 2)
+  type        TransactionType
+  frequency   FrequencyType @default(FIXED)
+
+  // Recurrence settings
+  recurrenceRule RecurrenceRule
+  interval       Int            @default(1) // Every X days/weeks/months
+  dayOfMonth     Int?           // For monthly: which day (1-31)
+  dayOfWeek      Int?           // For weekly: 0-6 (Sunday-Saturday)
+  startDate      DateTime
+  endDate        DateTime?      // Optional end date
+
+  categoryId  String
+  householdId String
+  userId      String   // Who created it
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastGenerated DateTime? // Last time transactions were generated
+
+  category      Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  household     Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions  Transaction[] // Transactions generated from this rule
+
+  @@index([householdId])
+  @@index([userId])
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([startDate])
+}
+
+enum TransactionType {
+  INCOME   // Receita
+  EXPENSE  // Despesa
+}
+
+enum FrequencyType {
+  FIXED       // Fixa (sempre o mesmo valor)
+  VARIABLE    // Variável (valor muda)
+  SPORADIC    // Esporádica (não regular)
+}
+
+enum RecurrenceRule {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
