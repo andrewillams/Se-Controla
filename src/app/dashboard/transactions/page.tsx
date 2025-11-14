@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, ArrowUpCircle, ArrowDownCircle, Edit, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { DeleteTransactionButton } from "@/components/dashboard/delete-transaction-button";
+import { TransactionItem } from "@/components/dashboard/transaction-item";
 
 export default async function TransactionsPage() {
   const session = await getServerSession(authOptions);
@@ -40,16 +40,16 @@ export default async function TransactionsPage() {
   });
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Transações</h1>
-          <p className="text-muted-foreground">
-            {currentHousehold.name} - Todas as movimentações
+          <h1 className="text-2xl sm:text-3xl font-bold">Transações</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            {currentHousehold.name}
           </p>
         </div>
-        <Link href="/dashboard/transactions/new">
-          <Button size="lg" className="gap-2">
+        <Link href="/dashboard/transactions/new" className="w-full sm:w-auto">
+          <Button size="lg" className="gap-2 w-full sm:w-auto">
             <Plus className="h-4 w-4" />
             Nova Transação
           </Button>
@@ -76,80 +76,9 @@ export default async function TransactionsPage() {
       ) : (
         <Card>
           <CardContent className="p-0">
-            <div className="divide-y">
-              {transactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="p-4 hover:bg-muted/50 transition-colors flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`p-3 rounded-full ${
-                        transaction.type === "INCOME"
-                          ? "bg-success/10 text-success"
-                          : "bg-destructive/10 text-destructive"
-                      }`}
-                    >
-                      {transaction.type === "INCOME" ? (
-                        <ArrowUpCircle className="h-5 w-5" />
-                      ) : (
-                        <ArrowDownCircle className="h-5 w-5" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium text-lg">{transaction.description}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge
-                          variant="outline"
-                          className="text-xs"
-                          style={{
-                            borderColor: transaction.category.color,
-                            color: transaction.category.color,
-                          }}
-                        >
-                          {transaction.category.name}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {transaction.frequency === "FIXED"
-                            ? "Fixa"
-                            : transaction.frequency === "VARIABLE"
-                            ? "Variável"
-                            : "Esporádica"}
-                        </Badge>
-                        {!transaction.isPaid && (
-                          <Badge variant="warning" className="text-xs">
-                            Pendente
-                          </Badge>
-                        )}
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(transaction.date)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p
-                        className={`font-bold text-xl ${
-                          transaction.type === "INCOME" ? "text-success" : "text-destructive"
-                        }`}
-                      >
-                        {transaction.type === "INCOME" ? "+" : "-"}
-                        {formatCurrency(Number(transaction.amount))}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Link href={`/dashboard/transactions/${transaction.id}/edit`}>
-                        <Button size="icon" variant="ghost">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <DeleteTransactionButton transactionId={transaction.id} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {transactions.map((transaction) => (
+              <TransactionItem key={transaction.id} transaction={transaction} />
+            ))}
           </CardContent>
         </Card>
       )}

@@ -39,6 +39,20 @@ Sistema completo de gerenciamento financeiro pessoal e familiar, com foco em con
   - Cores personalizadas por categoria
   - Ícones visuais
 
+- **PWA (Progressive Web App)**
+  - Instalável em qualquer dispositivo (Android, iOS, Desktop)
+  - Funciona offline com service worker
+  - Ícone na tela inicial
+  - Atalhos rápidos para ações
+  - Notificações push (futuro)
+
+- **Interface Responsiva**
+  - 100% otimizado para mobile, tablet e desktop
+  - Menu mobile com navegação intuitiva
+  - Floating Action Button (FAB) para acesso rápido
+  - Cards adaptáveis para telas pequenas
+  - Touch-friendly em todos os dispositivos
+
 ### 🔜 Próximas Features (Roadmap)
 
 - **Integração Google Calendar**
@@ -64,10 +78,12 @@ Sistema completo de gerenciamento financeiro pessoal e familiar, com foco em con
 
 - **Frontend**: Next.js 14 (App Router), React 18, TypeScript
 - **Styling**: TailwindCSS + shadcn/ui
+- **PWA**: next-pwa + Service Worker
 - **Backend**: Next.js API Routes
 - **Database**: PostgreSQL + Prisma ORM
 - **Auth**: NextAuth.js (Google OAuth)
 - **Type Safety**: TypeScript + Zod
+- **UI Components**: Radix UI primitives
 - **Future**: tRPC, Recharts, Google Calendar API
 
 ## 📋 Pré-requisitos
@@ -149,6 +165,21 @@ npm run dev
 ```
 
 Acesse [http://localhost:3000](http://localhost:3000)
+
+## 📱 Instalar como PWA (Opcional)
+
+### Desktop (Chrome/Edge)
+1. Acesse o app no navegador
+2. Clique no ícone de "Instalar" na barra de endereço
+3. Ou vá em Menu > Instalar Se Controla
+
+### Mobile (Android/iOS)
+1. Abra o app no Chrome (Android) ou Safari (iOS)
+2. Toque no menu (⋮ ou compartilhar)
+3. Selecione "Adicionar à tela inicial"
+4. O app aparecerá como ícone nativo!
+
+**Nota**: Para testar PWA localmente, você precisa de HTTPS. Use `ngrok` ou similar para criar um túnel seguro.
 
 ## 📂 Estrutura do Projeto
 
@@ -232,12 +263,27 @@ Se-Controla/
 
 ## 🚀 Deploy
 
-### Vercel (Recomendado)
+**Veja o guia completo em [DEPLOY.md](./DEPLOY.md)**
 
-1. Push o código para GitHub
-2. Conecte o repositório no [Vercel](https://vercel.com)
-3. Configure as variáveis de ambiente
-4. Deploy automático a cada push
+### Quick Start (Vercel)
+
+1. Gere os ícones PNG a partir do SVG em `/public/icon.svg`
+   ```bash
+   # Usando ImageMagick
+   convert public/icon.svg -resize 192x192 public/icon-192.png
+   convert public/icon.svg -resize 512x512 public/icon-512.png
+   ```
+
+2. Push para GitHub
+   ```bash
+   git push origin main
+   ```
+
+3. Conecte no [Vercel](https://vercel.com)
+
+4. Configure as variáveis de ambiente (veja `.env.example`)
+
+5. Deploy! 🎉
 
 ### Outras Plataformas
 
